@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import './App.css';
+import { Observable, from, fromEvent } from 'rxjs';
+import { pluck, timeInterval, map } from 'rxjs/operators';
 
 function App() {
     const [forecasts, setForecasts] = useState();
@@ -8,6 +10,17 @@ function App() {
         populateWeatherData();
     }, []);
 
+    let clicks$ = fromEvent(document, 'click');
+    clicks$.pipe(
+        pluck('clientX'),
+        timeInterval(),
+        map(clickInfo => `${clickInfo.interval / 1000} seconds (${clickInfo.value})`)
+    )
+        .subscribe(
+            (value) => console.log(value),
+            (err) => console.log(`ERROR: ${err}`),
+            () => console.log('All done.')
+        );
     const contents = forecasts === undefined
         ? <p><em>Loading... Please refresh once the ASP.NET backend has started. See <a href="https://aka.ms/jspsintegrationreact">https://aka.ms/jspsintegrationreact</a> for more details.</em></p>
         : <table className="table table-striped" aria-labelledby="tabelLabel">
@@ -38,7 +51,7 @@ function App() {
             {contents}
         </div>
     );
-    
+
     async function populateWeatherData() {
         const response = await fetch('weatherforecast');
         const data = await response.json();
